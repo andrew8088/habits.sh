@@ -25,3 +25,12 @@ export default class LocalStore<T> implements PersistentStore<T> {
     return EitherAsync.liftEither(Right(undefined));
   }
 }
+
+const localStorageP = {
+  async getItem(key: string) {
+    return localStorage.getItem(key);
+  },
+  async setItem(key: string, value: string) {
+    return localStorage.setItem(key, value);
+  },
+};
