@@ -1,16 +1,22 @@
 import { createError } from "../error";
+import { defined, jsonParse } from "../primitives";
 import type { PersistentStore } from "./store";
-import { EitherAsync, Just, Maybe, Nothing, Right } from "purify-ts";
+import { Either, EitherAsync, Maybe, Right } from "purify-ts";
 
 export default class LocalStore<T> implements PersistentStore<T> {
   public static KeyNotFoundError = createError("KeyNotFoundError");
 
-  constructor(public parse: (t: unknown) => T, public prefix: string = "") {}
+  constructor(
+    public decode: (t: unknown) => Either<string, T>,
+    public prefix: string = ""
+  ) {}
 
   get(key: string): EitherAsync<unknown, Maybe<T>> {
     const k = `${this.prefix}${key}`;
-    const raw = localStorage.getItem(k);
-    const maybe = (raw ? Just(raw) : Nothing).map(JSON.parse).map(this.parse);
+    const maybe = defined(localStorage.getItem(k))
+      .map(JSON.parse)
+      .map(this.decode)
+      .chain((x) => x.toMaybe()); // lost the error
     return EitherAsync.liftEither(Right(maybe));
   }
   set(key: string, t: T): EitherAsync<unknown, void> {

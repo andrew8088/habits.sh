@@ -1,19 +1,36 @@
-import { EitherAsync, Either, Maybe } from "purify-ts";
+import {
+  EitherAsync,
+  Either,
+  Maybe,
+  Codec,
+  string,
+  date,
+  GetType,
+  Right,
+  Left,
+} from "purify-ts";
 import LocalStore from "./persistence/store.local";
-import z from "zod";
 
-const habitSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  createdAt: z.coerce.date(),
+const habitCodec = Codec.interface({
+  id: string,
+  name: string,
+  createdAt: date,
 });
 
-const habitIdsSchema = z.array(z.string());
+const habitIdsCodec = Codec.custom<string[]>({
+  decode: (input) => {
+    return Array.isArray(input) &&
+      input.every((elem) => typeof elem === "string")
+      ? Right(input)
+      : Left("invalid");
+  },
+  encode: (input) => input,
+});
 
-export type Habit = z.infer<typeof habitSchema>;
+export type Habit = GetType<typeof habitCodec>;
 
-const habitStore = new LocalStore(habitSchema.parse, "habit-");
-const habitIdsStore = new LocalStore(habitIdsSchema.parse);
+const habitStore = new LocalStore(habitCodec.decode, "habit-");
+const habitIdsStore = new LocalStore(habitIdsCodec.decode);
 const habitIdsKey = "habit-ids";
 
 export function findAll() {
