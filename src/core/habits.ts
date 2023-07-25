@@ -34,17 +34,11 @@ const habitIdsStore = new LocalStore(habitIdsCodec.decode);
 const habitIdsKey = "habit-ids";
 
 export function findAll() {
-  const a = habitIdsStore.get(habitIdsKey);
-  const b = a.map((maybeIds) => {
-    return maybeIds.map((ids) => {
-      const d = ids.map((id) => habitStore.get(id));
-      const e = EitherAsync.rights(d);
-      const f = e.then(Maybe.catMaybes);
-      return f;
-    });
-  });
-
-  return b.map((habits) => habits.orDefault(Promise.resolve([]))).orDefault([]);
+  return habitIdsStore.get(habitIdsKey).map((maybeIds) => {
+    return maybeIds.map((ids) =>
+      EitherAsync.rights(ids.map((id) => habitStore.get(id))).then(Maybe.catMaybes)
+    )
+  }).map((habits) => habits.orDefault(Promise.resolve([]))).orDefault([]);
 }
 
 export function create(name: string) {
