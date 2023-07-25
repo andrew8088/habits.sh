@@ -1,10 +1,7 @@
-import { createError } from "../error";
 import type { PersistentStore } from "./store";
 import { Either, EitherAsync, Just, Left, Maybe, Nothing, Right } from "purify-ts";
 
 export default class LocalStore<T> implements PersistentStore<T> {
-  public static KeyNotFoundError = createError("KeyNotFoundError");
-
   constructor(
     public decode: (t: unknown) => Either<string, T>,
     public prefix: string = ""
